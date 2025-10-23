@@ -21,6 +21,9 @@ class Deck {
     constructor(numberOfDecks = 1) {
         this.numberOfDecks = numberOfDecks;
         this.cards = [];
+        this.totalCards = 0;
+        this.shuffleThreshold = 0;
+        this.needsShuffle = false;
         this.reset();
     }
 
@@ -37,6 +40,12 @@ class Deck {
                 }
             }
         }
+
+        this.totalCards = this.cards.length;
+        // Shuffle when 25% of cards remain (75% penetration - realistic casino practice)
+        this.shuffleThreshold = Math.floor(this.totalCards * 0.25);
+        this.needsShuffle = false;
+
         this.shuffle();
     }
 
@@ -45,13 +54,33 @@ class Deck {
             const j = Math.floor(Math.random() * (i + 1));
             [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
         }
+        this.needsShuffle = false;
     }
 
     draw() {
+        // Check if we need to shuffle (but don't shuffle mid-hand)
+        if (this.cards.length <= this.shuffleThreshold && !this.needsShuffle) {
+            this.needsShuffle = true;
+        }
+
+        // If completely out of cards (safety check), force reset
         if (this.cards.length === 0) {
             this.reset();
         }
+
         return this.cards.pop();
+    }
+
+    shouldShuffle() {
+        return this.needsShuffle;
+    }
+
+    getCardsRemaining() {
+        return this.cards.length;
+    }
+
+    getPenetration() {
+        return Math.floor(((this.totalCards - this.cards.length) / this.totalCards) * 100);
     }
 }
 
@@ -74,6 +103,7 @@ class BlackjackGame {
         // UI Elements
         this.chipsDisplay = document.getElementById('chips');
         this.betDisplay = document.getElementById('current-bet');
+        this.cardsRemainingDisplay = document.getElementById('cards-remaining');
         this.playerCardsEl = document.getElementById('player-cards');
         this.dealerCardsEl = document.getElementById('dealer-cards');
         this.playerScoreEl = document.getElementById('player-score');
@@ -240,6 +270,16 @@ class BlackjackGame {
                 break;
         }
 
+        // Check if shuffle is needed (realistic casino practice)
+        if (this.deck.shouldShuffle()) {
+            message += ' | Shuffling deck...';
+            setTimeout(() => {
+                this.deck.reset();
+                this.updateDisplay();
+                this.showMessage('Deck shuffled! Fresh shoe.', 'info');
+            }, 2000);
+        }
+
         this.showMessage(message, result);
         this.showControls('new');
         this.updateDisplay();
@@ -302,9 +342,17 @@ class BlackjackGame {
     }
 
     updateDisplay() {
-        // Update chips and bet
+        // Update chips, bet, and cards remaining
         this.chipsDisplay.textContent = this.chips;
         this.betDisplay.textContent = this.currentBet;
+        this.cardsRemainingDisplay.textContent = this.deck.getCardsRemaining();
+
+        // Add warning color if running low on cards
+        if (this.deck.shouldShuffle()) {
+            this.cardsRemainingDisplay.style.color = '#ff5722';
+        } else {
+            this.cardsRemainingDisplay.style.color = '';
+        }
 
         // Update player cards
         this.playerCardsEl.innerHTML = this.playerHand
