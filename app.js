@@ -18,7 +18,8 @@ class Card {
 }
 
 class Deck {
-    constructor() {
+    constructor(numberOfDecks = 1) {
+        this.numberOfDecks = numberOfDecks;
         this.cards = [];
         this.reset();
     }
@@ -28,9 +29,12 @@ class Deck {
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         this.cards = [];
 
-        for (let suit of suits) {
-            for (let value of values) {
-                this.cards.push(new Card(suit, value));
+        // Create multiple decks
+        for (let deckNum = 0; deckNum < this.numberOfDecks; deckNum++) {
+            for (let suit of suits) {
+                for (let value of values) {
+                    this.cards.push(new Card(suit, value));
+                }
             }
         }
         this.shuffle();
@@ -53,7 +57,6 @@ class Deck {
 
 class BlackjackGame {
     constructor() {
-        this.deck = new Deck();
         this.playerHand = [];
         this.dealerHand = [];
         this.chips = 1000;
@@ -62,6 +65,7 @@ class BlackjackGame {
         this.dealerHidden = false;
 
         this.initializeElements();
+        this.initializeDeck(); // Initialize deck based on selector
         this.attachEventListeners();
         this.updateDisplay();
     }
@@ -88,6 +92,14 @@ class BlackjackGame {
         this.doubleBtn = document.getElementById('double-btn');
         this.newGameBtn = document.getElementById('new-game-btn');
         this.betButtons = document.querySelectorAll('.bet-btn');
+
+        // Deck selector
+        this.deckCountSelect = document.getElementById('deck-count');
+    }
+
+    initializeDeck() {
+        const deckCount = parseInt(this.deckCountSelect.value);
+        this.deck = new Deck(deckCount);
     }
 
     attachEventListeners() {
@@ -96,6 +108,14 @@ class BlackjackGame {
         });
 
         this.dealBtn.addEventListener('click', () => this.deal());
+
+        // Handle deck count change
+        this.deckCountSelect.addEventListener('change', () => {
+            if (!this.gameActive) {
+                this.initializeDeck();
+                this.showMessage(`Deck changed to ${this.deckCountSelect.value} deck(s)`, 'info');
+            }
+        });
         this.hitBtn.addEventListener('click', () => this.hit());
         this.standBtn.addEventListener('click', () => this.stand());
         this.doubleBtn.addEventListener('click', () => this.doubleDown());
