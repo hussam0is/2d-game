@@ -1,0 +1,25 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1a472a" rx="80"/>
+
+  <!-- Card 1 - Ace of Spades -->
+  <g transform="translate(80, 120)">
+    <rect width="120" height="160" fill="white" rx="10"/>
+    <text x="60" y="90" font-size="80" text-anchor="middle" fill="black">♠</text>
+    <text x="20" y="30" font-size="24" font-weight="bold" fill="black">A</text>
+  </g>
+
+  <!-- Card 2 - King of Hearts -->
+  <g transform="translate(220, 150)">
+    <rect width="120" height="160" fill="white" rx="10"/>
+    <text x="60" y="90" font-size="80" text-anchor="middle" fill="#d32f2f">♥</text>
+    <text x="20" y="30" font-size="24" font-weight="bold" fill="#d32f2f">K</text>
+  </g>
+
+  <!-- Chips -->
+  <g transform="translate(380, 280)">
+    <circle cx="0" cy="0" r="40" fill="#ffd700" stroke="#ff8c00" stroke-width="4"/>
+    <circle cx="0" cy="0" r="25" fill="#ffd700" stroke="#ff8c00" stroke-width="2"/>
+    <text x="0" y="8" font-size="24" font-weight="bold" text-anchor="middle" fill="#000">$</text>
+  </g>
+</svg>
