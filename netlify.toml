@@ -1,0 +1,35 @@
+# Netlify configuration for Blackjack PWA
+
+[build]
+  # No build command needed for static site
+  publish = "."
+
+[build.environment]
+  # No environment variables needed
+
+# Redirect rules
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Headers for PWA
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"

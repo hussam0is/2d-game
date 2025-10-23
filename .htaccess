@@ -1,0 +1,87 @@
+# Apache configuration for Blackjack PWA
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS (uncomment if needed)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+  # Web App Manifest
+  AddType application/manifest+json .webmanifest
+  AddType application/manifest+json .json
+
+  # JavaScript
+  AddType application/javascript .js
+  AddType application/javascript .mjs
+
+  # Images
+  AddType image/png .png
+  AddType image/svg+xml .svg
+  AddType image/webp .webp
+</IfModule>
+
+# Service Worker specific headers
+<FilesMatch "service-worker\.js$">
+  <IfModule mod_headers.c>
+    Header set Service-Worker-Allowed "/"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </IfModule>
+</FilesMatch>
+
+# Security Headers
+<IfModule mod_headers.c>
+  # Prevent MIME type sniffing
+  Header set X-Content-Type-Options "nosniff"
+
+  # Prevent clickjacking
+  Header set X-Frame-Options "DENY"
+
+  # Enable XSS protection
+  Header set X-XSS-Protection "1; mode=block"
+
+  # Referrer Policy
+  Header set Referrer-Policy "no-referrer-when-downgrade"
+</IfModule>
+
+# Cache Control
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Default expiration
+  ExpiresDefault "access plus 1 month"
+
+  # HTML (no cache for main page)
+  ExpiresByType text/html "access plus 0 seconds"
+
+  # Manifest (check frequently)
+  ExpiresByType application/manifest+json "access plus 1 day"
+
+  # Images (long cache)
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+
+  # CSS and JavaScript (medium cache)
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Enable compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE application/manifest+json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
