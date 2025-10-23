@@ -1,10 +1,10 @@
 name: Deploy Blackjack PWA to GitHub Pages
 
 on:
-  # Trigger on push to main branch
+  # Trigger on push to master branch
   push:
     branches:
-      - main
+      - master
 
   # Allow manual workflow trigger
   workflow_dispatch:
