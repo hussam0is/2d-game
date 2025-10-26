@@ -2,64 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Play a classic game of Blackjack">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Professional Blackjack game with authentic casino rules, statistics tracking, and strategy hints. Play online for free!">
+    <meta name="keywords" content="blackjack, 21, card game, casino, free blackjack, online blackjack">
+    <meta name="author" content="Blackjack Pro">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Blackjack Pro - Professional Casino Blackjack">
+    <meta property="og:description" content="Play professional-grade Blackjack with authentic casino rules and track your statistics">
+    <meta property="og:image" content="icons/icon-512x512.png">
+    <meta property="og:url" content="https://yourdomain.com">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Blackjack Pro - Professional Casino Blackjack">
+    <meta name="twitter:description" content="Play professional-grade Blackjack with authentic casino rules">
+    <meta name="twitter:image" content="icons/icon-512x512.png">
+
+    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#1a472a">
-    <title>Blackjack - PWA Game</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Blackjack Pro">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <title>Blackjack Pro - Professional Casino Blackjack Game</title>
+
+    <!-- Preload critical assets -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="app.js" as="script">
+
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>♠️ Blackjack Pro ♥️</h1>
             <div class="header-controls">
-                <button id="stats-btn" class="icon-btn" title="Statistics">📊</button>
-                <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+                <button id="stats-btn" class="icon-btn" title="Statistics" aria-label="View statistics">📊</button>
+                <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Open settings">⚙️</button>
             </div>
-            <div class="stats">
+            <div class="stats" role="status" aria-live="polite">
                 <div class="stat">
                     <span class="label">Chips:</span>
-                    <span id="chips" class="value">1000</span>
+                    <span id="chips" class="value" aria-label="Available chips">1000</span>
                 </div>
                 <div class="stat">
                     <span class="label">Bet:</span>
-                    <span id="current-bet" class="value">0</span>
+                    <span id="current-bet" class="value" aria-label="Current bet amount">0</span>
                 </div>
                 <div class="stat">
                     <span class="label">Cards:</span>
-                    <span id="cards-remaining" class="value">52</span>
+                    <span id="cards-remaining" class="value" aria-label="Cards remaining in deck">52</span>
                 </div>
                 <div class="stat">
                     <span class="label">Win Rate:</span>
-                    <span id="win-rate" class="value">--</span>
+                    <span id="win-rate" class="value" aria-label="Win rate percentage">--</span>
                 </div>
             </div>
         </header>
 
-        <main>
+        <main role="main">
             <!-- Dealer Section -->
-            <section class="dealer-section">
-                <h2>Dealer <span id="dealer-score" class="score"></span></h2>
-                <div id="dealer-cards" class="cards"></div>
+            <section class="dealer-section" aria-label="Dealer's hand">
+                <h2>Dealer <span id="dealer-score" class="score" aria-label="Dealer's score"></span></h2>
+                <div id="dealer-cards" class="cards" role="region" aria-live="polite" aria-label="Dealer's cards"></div>
             </section>
 
             <!-- Player Section -->
-            <section class="player-section">
-                <h2>You <span id="player-score" class="score"></span></h2>
-                <div id="player-cards" class="cards"></div>
+            <section class="player-section" aria-label="Your hand">
+                <h2>You <span id="player-score" class="score" aria-label="Your score"></span></h2>
+                <div id="player-cards" class="cards" role="region" aria-live="polite" aria-label="Your cards"></div>
             </section>
 
             <!-- Message Display -->
-            <div id="message" class="message"></div>
+            <div id="message" class="message" role="alert" aria-live="assertive"></div>
 
             <!-- Betting Controls -->
-            <div id="betting-controls" class="betting-controls">
+            <div id="betting-controls" class="betting-controls" role="region" aria-label="Betting controls">
                 <h3>Place Your Bet</h3>
                 <div class="deck-selection">
                     <label for="deck-count">Number of Decks:</label>
-                    <select id="deck-count" class="deck-select">
+                    <select id="deck-count" class="deck-select" aria-label="Select number of decks">
                         <option value="1">1 Deck</option>
                         <option value="2">2 Decks</option>
                         <option value="4" selected>4 Decks</option>
@@ -67,57 +106,57 @@
                         <option value="8">8 Decks</option>
                     </select>
                 </div>
-                <div class="bet-buttons">
-                    <button class="bet-btn" data-amount="10">$10</button>
-                    <button class="bet-btn" data-amount="25">$25</button>
-                    <button class="bet-btn" data-amount="50">$50</button>
-                    <button class="bet-btn" data-amount="100">$100</button>
+                <div class="bet-buttons" role="group" aria-label="Bet amount options">
+                    <button class="bet-btn" data-amount="10" aria-label="Bet 10 dollars">$10</button>
+                    <button class="bet-btn" data-amount="25" aria-label="Bet 25 dollars">$25</button>
+                    <button class="bet-btn" data-amount="50" aria-label="Bet 50 dollars">$50</button>
+                    <button class="bet-btn" data-amount="100" aria-label="Bet 100 dollars">$100</button>
                 </div>
-                <button id="deal-btn" class="action-btn primary" disabled>Deal</button>
+                <button id="deal-btn" class="action-btn primary" disabled aria-label="Deal cards to start game">Deal</button>
             </div>
 
             <!-- Insurance Option -->
-            <div id="insurance-controls" class="insurance-controls hidden">
+            <div id="insurance-controls" class="insurance-controls hidden" role="region" aria-label="Insurance option">
                 <p class="insurance-message">Dealer shows Ace! Insurance?</p>
-                <div class="insurance-buttons">
-                    <button id="insurance-yes-btn" class="action-btn" style="background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);">Yes</button>
-                    <button id="insurance-no-btn" class="action-btn">No</button>
+                <div class="insurance-buttons" role="group" aria-label="Insurance decision">
+                    <button id="insurance-yes-btn" class="action-btn" style="background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);" aria-label="Take insurance">Yes</button>
+                    <button id="insurance-no-btn" class="action-btn" aria-label="Decline insurance">No</button>
                 </div>
             </div>
 
             <!-- Game Controls -->
-            <div id="game-controls" class="game-controls hidden">
-                <button id="hit-btn" class="action-btn">Hit</button>
-                <button id="stand-btn" class="action-btn">Stand</button>
-                <button id="double-btn" class="action-btn">Double Down</button>
-                <button id="split-btn" class="action-btn hidden" style="background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);">Split</button>
-                <button id="surrender-btn" class="action-btn" style="background: linear-gradient(135deg, #f44336 0%, #e57373 100%);">Surrender</button>
+            <div id="game-controls" class="game-controls hidden" role="region" aria-label="Game controls">
+                <button id="hit-btn" class="action-btn" aria-label="Hit - Take another card">Hit</button>
+                <button id="stand-btn" class="action-btn" aria-label="Stand - Keep current hand">Stand</button>
+                <button id="double-btn" class="action-btn" aria-label="Double down - Double bet and take one card">Double Down</button>
+                <button id="split-btn" class="action-btn hidden" style="background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);" aria-label="Split pairs into two hands">Split</button>
+                <button id="surrender-btn" class="action-btn" style="background: linear-gradient(135deg, #f44336 0%, #e57373 100%);" aria-label="Surrender - Forfeit half bet and end hand">Surrender</button>
             </div>
 
             <!-- Strategy Hint -->
-            <div id="strategy-hint" class="strategy-hint hidden">
-                <span class="hint-icon">💡</span>
-                <span id="hint-text">Hint</span>
+            <div id="strategy-hint" class="strategy-hint hidden" role="complementary" aria-live="polite">
+                <span class="hint-icon" aria-hidden="true">💡</span>
+                <span id="hint-text" aria-label="Strategy hint">Hint</span>
             </div>
 
             <!-- New Game Button -->
-            <div id="new-game-controls" class="new-game-controls hidden">
-                <button id="new-game-btn" class="action-btn primary">New Game</button>
+            <div id="new-game-controls" class="new-game-controls hidden" role="region" aria-label="New game controls">
+                <button id="new-game-btn" class="action-btn primary" aria-label="Start new game">New Game</button>
             </div>
         </main>
 
-        <footer>
-            <button id="install-btn" class="install-btn hidden">Install App</button>
+        <footer role="contentinfo">
+            <button id="install-btn" class="install-btn hidden" aria-label="Install app to device">Install App</button>
             <p>© 2025 Blackjack Pro PWA</p>
         </footer>
     </div>
 
     <!-- Statistics Modal -->
-    <div id="stats-modal" class="modal hidden">
+    <div id="stats-modal" class="modal hidden" role="dialog" aria-labelledby="stats-modal-title" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📊 Statistics</h2>
-                <button class="close-btn" data-modal="stats-modal">×</button>
+                <h2 id="stats-modal-title">📊 Statistics</h2>
+                <button class="close-btn" data-modal="stats-modal" aria-label="Close statistics">×</button>
             </div>
             <div class="modal-body">
                 <div class="stat-row">
@@ -152,45 +191,45 @@
                     <span class="stat-label">Total Wagered:</span>
                     <span id="stat-wagered" class="stat-value">$0</span>
                 </div>
-                <button id="reset-stats-btn" class="action-btn" style="margin-top: 15px; background: linear-gradient(135deg, #f44336 0%, #e57373 100%);">Reset Statistics</button>
+                <button id="reset-stats-btn" class="action-btn" style="margin-top: 15px; background: linear-gradient(135deg, #f44336 0%, #e57373 100%);" aria-label="Reset all statistics">Reset Statistics</button>
             </div>
         </div>
     </div>
 
     <!-- Settings Modal -->
-    <div id="settings-modal" class="modal hidden">
+    <div id="settings-modal" class="modal hidden" role="dialog" aria-labelledby="settings-modal-title" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ Settings</h2>
-                <button class="close-btn" data-modal="settings-modal">×</button>
+                <h2 id="settings-modal-title">⚙️ Settings</h2>
+                <button class="close-btn" data-modal="settings-modal" aria-label="Close settings">×</button>
             </div>
             <div class="modal-body">
                 <div class="setting-row">
                     <label for="sound-toggle">Sound Effects:</label>
                     <label class="switch">
-                        <input type="checkbox" id="sound-toggle" checked>
-                        <span class="slider"></span>
+                        <input type="checkbox" id="sound-toggle" checked aria-label="Toggle sound effects">
+                        <span class="slider" aria-hidden="true"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <label for="hints-toggle">Strategy Hints:</label>
                     <label class="switch">
-                        <input type="checkbox" id="hints-toggle">
-                        <span class="slider"></span>
+                        <input type="checkbox" id="hints-toggle" aria-label="Toggle strategy hints">
+                        <span class="slider" aria-hidden="true"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <label for="animations-toggle">Animations:</label>
                     <label class="switch">
-                        <input type="checkbox" id="animations-toggle" checked>
-                        <span class="slider"></span>
+                        <input type="checkbox" id="animations-toggle" checked aria-label="Toggle animations">
+                        <span class="slider" aria-hidden="true"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <label for="auto-stand-toggle">Auto-Stand on 21:</label>
                     <label class="switch">
-                        <input type="checkbox" id="auto-stand-toggle" checked>
-                        <span class="slider"></span>
+                        <input type="checkbox" id="auto-stand-toggle" checked aria-label="Toggle auto-stand on 21">
+                        <span class="slider" aria-hidden="true"></span>
                     </label>
                 </div>
             </div>
