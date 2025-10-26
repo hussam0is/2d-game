@@ -13,7 +13,11 @@
 <body>
     <div class="container">
         <header>
-            <h1>♠️ Blackjack ♥️</h1>
+            <h1>♠️ Blackjack Pro ♥️</h1>
+            <div class="header-controls">
+                <button id="stats-btn" class="icon-btn" title="Statistics">📊</button>
+                <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
             <div class="stats">
                 <div class="stat">
                     <span class="label">Chips:</span>
@@ -26,6 +30,10 @@
                 <div class="stat">
                     <span class="label">Cards:</span>
                     <span id="cards-remaining" class="value">52</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Win Rate:</span>
+                    <span id="win-rate" class="value">--</span>
                 </div>
             </div>
         </header>
@@ -68,11 +76,28 @@
                 <button id="deal-btn" class="action-btn primary" disabled>Deal</button>
             </div>
 
+            <!-- Insurance Option -->
+            <div id="insurance-controls" class="insurance-controls hidden">
+                <p class="insurance-message">Dealer shows Ace! Insurance?</p>
+                <div class="insurance-buttons">
+                    <button id="insurance-yes-btn" class="action-btn" style="background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);">Yes</button>
+                    <button id="insurance-no-btn" class="action-btn">No</button>
+                </div>
+            </div>
+
             <!-- Game Controls -->
             <div id="game-controls" class="game-controls hidden">
                 <button id="hit-btn" class="action-btn">Hit</button>
                 <button id="stand-btn" class="action-btn">Stand</button>
                 <button id="double-btn" class="action-btn">Double Down</button>
+                <button id="split-btn" class="action-btn hidden" style="background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);">Split</button>
+                <button id="surrender-btn" class="action-btn" style="background: linear-gradient(135deg, #f44336 0%, #e57373 100%);">Surrender</button>
+            </div>
+
+            <!-- Strategy Hint -->
+            <div id="strategy-hint" class="strategy-hint hidden">
+                <span class="hint-icon">💡</span>
+                <span id="hint-text">Hint</span>
             </div>
 
             <!-- New Game Button -->
@@ -83,8 +108,93 @@
 
         <footer>
             <button id="install-btn" class="install-btn hidden">Install App</button>
-            <p>© 2025 Blackjack PWA</p>
+            <p>© 2025 Blackjack Pro PWA</p>
         </footer>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div id="stats-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Statistics</h2>
+                <button class="close-btn" data-modal="stats-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stat-row">
+                    <span class="stat-label">Hands Played:</span>
+                    <span id="stat-hands" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Hands Won:</span>
+                    <span id="stat-wins" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Hands Lost:</span>
+                    <span id="stat-losses" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Pushes:</span>
+                    <span id="stat-pushes" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Blackjacks:</span>
+                    <span id="stat-blackjacks" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Win Rate:</span>
+                    <span id="stat-winrate" class="stat-value">0%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Biggest Win:</span>
+                    <span id="stat-bigwin" class="stat-value">$0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Wagered:</span>
+                    <span id="stat-wagered" class="stat-value">$0</span>
+                </div>
+                <button id="reset-stats-btn" class="action-btn" style="margin-top: 15px; background: linear-gradient(135deg, #f44336 0%, #e57373 100%);">Reset Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="close-btn" data-modal="settings-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-row">
+                    <label for="sound-toggle">Sound Effects:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label for="hints-toggle">Strategy Hints:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="hints-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label for="animations-toggle">Animations:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="animations-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label for="auto-stand-toggle">Auto-Stand on 21:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-stand-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
