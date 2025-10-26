@@ -112,6 +112,29 @@
                     <button class="bet-btn" data-amount="50" aria-label="Bet 50 dollars">$50</button>
                     <button class="bet-btn" data-amount="100" aria-label="Bet 100 dollars">$100</button>
                 </div>
+
+                <!-- Side Bets Section -->
+                <div class="side-bets-section">
+                    <h4>Side Bets ($5 each)</h4>
+                    <div class="side-bet-toggles" role="group" aria-label="Side bet options">
+                        <label class="side-bet-option">
+                            <input type="checkbox" id="lucky-pair-bet" aria-label="Lucky Pair side bet">
+                            <span class="side-bet-label">Lucky Pair <span class="side-bet-info" title="Perfect Pair 25:1 | Colored Pair 12:1 | Mixed Pair 6:1">ℹ️</span></span>
+                            <span id="lucky-pair-amount" class="side-bet-amount hidden">$5</span>
+                        </label>
+                        <label class="side-bet-option">
+                            <input type="checkbox" id="twentyone-plus-bet" aria-label="21+3 side bet">
+                            <span class="side-bet-label">21+3 <span class="side-bet-info" title="Suited 3-Kind 100:1 | Straight Flush 40:1 | 3-Kind 30:1 | Straight 10:1 | Flush 5:1">ℹ️</span></span>
+                            <span id="twentyone-plus-amount" class="side-bet-amount hidden">$5</span>
+                        </label>
+                        <label class="side-bet-option">
+                            <input type="checkbox" id="top3-bet" aria-label="Top 3 side bet">
+                            <span class="side-bet-label">Top 3 <span class="side-bet-info" title="Suited 3-Kind 270:1 | Straight Flush 180:1 | 3-Kind 90:1 | Straight 9:1 | Flush 9:1">ℹ️</span></span>
+                            <span id="top3-amount" class="side-bet-amount hidden">$5</span>
+                        </label>
+                    </div>
+                </div>
+
                 <button id="deal-btn" class="action-btn primary" disabled aria-label="Deal cards to start game">Deal</button>
             </div>
 
@@ -190,6 +213,24 @@
                 <div class="stat-row">
                     <span class="stat-label">Total Wagered:</span>
                     <span id="stat-wagered" class="stat-value">$0</span>
+                </div>
+                <div class="stat-divider"></div>
+                <h3 style="text-align: center; margin: 10px 0; color: #ffd700;">Bonus Stats</h3>
+                <div class="stat-row">
+                    <span class="stat-label">Lucky Pair Wins:</span>
+                    <span id="stat-lucky-pair-wins" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">21+3 Wins:</span>
+                    <span id="stat-twentyone-plus-wins" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Top 3 Wins:</span>
+                    <span id="stat-top3-wins" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Bonus Winnings:</span>
+                    <span id="stat-bonus-winnings" class="stat-value">$0</span>
                 </div>
                 <button id="reset-stats-btn" class="action-btn" style="margin-top: 15px; background: linear-gradient(135deg, #f44336 0%, #e57373 100%);" aria-label="Reset all statistics">Reset Statistics</button>
             </div>
