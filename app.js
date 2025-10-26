@@ -103,7 +103,11 @@ class Statistics {
             pushes: Number(stats.pushes) || 0,
             blackjacks: Number(stats.blackjacks) || 0,
             biggestWin: Number(stats.biggestWin) || 0,
-            totalWagered: Number(stats.totalWagered) || 0
+            totalWagered: Number(stats.totalWagered) || 0,
+            luckyPairWins: Number(stats.luckyPairWins) || 0,
+            twentyOnePlusWins: Number(stats.twentyOnePlusWins) || 0,
+            top3Wins: Number(stats.top3Wins) || 0,
+            bonusWinnings: Number(stats.bonusWinnings) || 0
         };
     }
 
@@ -116,7 +120,11 @@ class Statistics {
                 pushes: this.pushes,
                 blackjacks: this.blackjacks,
                 biggestWin: this.biggestWin,
-                totalWagered: this.totalWagered
+                totalWagered: this.totalWagered,
+                luckyPairWins: this.luckyPairWins,
+                twentyOnePlusWins: this.twentyOnePlusWins,
+                top3Wins: this.top3Wins,
+                bonusWinnings: this.bonusWinnings
             }));
         } catch (e) {
             console.error('Error saving stats:', e);
@@ -167,8 +175,33 @@ class Statistics {
         this.blackjacks = 0;
         this.biggestWin = 0;
         this.totalWagered = 0;
+        this.luckyPairWins = 0;
+        this.twentyOnePlusWins = 0;
+        this.top3Wins = 0;
+        this.bonusWinnings = 0;
         this.saveStats();
         trackEvent('Settings', 'ResetStats', 'Statistics Reset');
+    }
+
+    recordBonus(bonusType, amount) {
+        try {
+            switch (bonusType) {
+                case 'luckyPair':
+                    this.luckyPairWins++;
+                    break;
+                case 'twentyOnePlus':
+                    this.twentyOnePlusWins++;
+                    break;
+                case 'top3':
+                    this.top3Wins++;
+                    break;
+            }
+            this.bonusWinnings += amount;
+            this.saveStats();
+            trackEvent('Bonus', bonusType, 'Won', amount);
+        } catch (e) {
+            console.error('Error recording bonus:', e);
+        }
     }
 }
 
@@ -419,6 +452,12 @@ class BlackjackGame {
         this.hasInsurance = false;
         this.roundInProgress = false;
 
+        // Side bets
+        this.luckyPairBet = 0;
+        this.twentyOnePlusBet = 0;
+        this.top3Bet = 0;
+        this.sideBetAmount = 5;
+
         // Initialize systems
         try {
             this.stats = new Statistics();
@@ -492,6 +531,11 @@ class BlackjackGame {
 
             // Deck selector
             this.deckCountSelect = this.getElement('deck-count');
+
+            // Side bet checkboxes
+            this.luckyPairCheckbox = this.getElement('lucky-pair-bet');
+            this.twentyOnePlusCheckbox = this.getElement('twentyone-plus-bet');
+            this.top3Checkbox = this.getElement('top3-bet');
 
             // Close buttons
             document.querySelectorAll('.close-btn').forEach(btn => {
@@ -570,6 +614,17 @@ class BlackjackGame {
                     this.updateDisplay();
                     this.showMessage(`Deck changed to ${this.deckCountSelect.value} deck(s)`, 'info');
                 }
+            });
+
+            // Side bet checkboxes
+            this.luckyPairCheckbox?.addEventListener('change', (e) => {
+                this.updateSideBets();
+            });
+            this.twentyOnePlusCheckbox?.addEventListener('change', (e) => {
+                this.updateSideBets();
+            });
+            this.top3Checkbox?.addEventListener('change', (e) => {
+                this.updateSideBets();
             });
 
             // Modal buttons
@@ -675,12 +730,268 @@ class BlackjackGame {
     }
 
     /**
+     * Update side bet amounts based on checkboxes
+     */
+    updateSideBets() {
+        if (this.gameActive || this.roundInProgress) return;
+
+        try {
+            this.luckyPairBet = this.luckyPairCheckbox?.checked ? this.sideBetAmount : 0;
+            this.twentyOnePlusBet = this.twentyOnePlusCheckbox?.checked ? this.sideBetAmount : 0;
+            this.top3Bet = this.top3Checkbox?.checked ? this.sideBetAmount : 0;
+
+            const totalSideBets = this.luckyPairBet + this.twentyOnePlusBet + this.top3Bet;
+
+            // Check if enough chips for side bets
+            if (totalSideBets > 0 && totalSideBets + this.currentBet > this.chips) {
+                this.showMessage('Not enough chips for all bets!', 'error');
+                // Uncheck the last checked box
+                if (this.luckyPairCheckbox?.checked && this.luckyPairBet > 0) {
+                    this.luckyPairCheckbox.checked = false;
+                    this.luckyPairBet = 0;
+                } else if (this.twentyOnePlusCheckbox?.checked && this.twentyOnePlusBet > 0) {
+                    this.twentyOnePlusCheckbox.checked = false;
+                    this.twentyOnePlusBet = 0;
+                } else if (this.top3Checkbox?.checked && this.top3Bet > 0) {
+                    this.top3Checkbox.checked = false;
+                    this.top3Bet = 0;
+                }
+                return;
+            }
+
+            trackEvent('Game', 'SideBets', 'Updated', totalSideBets);
+        } catch (e) {
+            console.error('Error updating side bets:', e);
+        }
+    }
+
+    /**
+     * Get card color (red or black)
+     */
+    getCardColor(card) {
+        return (card.suit === '♥️' || card.suit === '♦️') ? 'red' : 'black';
+    }
+
+    /**
+     * Get numeric rank value for poker hand evaluation
+     */
+    getRankValue(card) {
+        const rankMap = {
+            'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+            '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
+        };
+        return rankMap[card.value] || 0;
+    }
+
+    /**
+     * Evaluate Lucky Pair bonus (Perfect Pairs)
+     */
+    evaluateLuckyPair() {
+        if (this.luckyPairBet === 0 || this.playerHand.length < 2) return null;
+
+        const card1 = this.playerHand[0];
+        const card2 = this.playerHand[1];
+
+        // Check if same rank
+        if (card1.value !== card2.value) return null;
+
+        // Perfect Pair - same rank and suit (shouldn't happen in multi-deck, but check anyway)
+        if (card1.suit === card2.suit) {
+            return { name: 'Perfect Pair', payout: 25 };
+        }
+
+        // Colored Pair - same rank and color
+        if (this.getCardColor(card1) === this.getCardColor(card2)) {
+            return { name: 'Colored Pair', payout: 12 };
+        }
+
+        // Mixed Pair - same rank, different colors
+        return { name: 'Mixed Pair', payout: 6 };
+    }
+
+    /**
+     * Check if three cards form a straight
+     */
+    isStraight(cards) {
+        const ranks = cards.map(c => this.getRankValue(c)).sort((a, b) => a - b);
+
+        // Regular straight
+        if (ranks[1] === ranks[0] + 1 && ranks[2] === ranks[1] + 1) {
+            return true;
+        }
+
+        // Ace-high straight (Q-K-A or K-A-2, etc)
+        if (ranks[0] === 1) { // Ace
+            const highRanks = [14, ranks[1], ranks[2]].sort((a, b) => a - b);
+            if (highRanks[1] === highRanks[0] + 1 && highRanks[2] === highRanks[1] + 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if three cards form a flush
+     */
+    isFlush(cards) {
+        return cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
+    }
+
+    /**
+     * Check if three cards are three of a kind
+     */
+    isThreeOfKind(cards) {
+        return cards[0].value === cards[1].value && cards[1].value === cards[2].value;
+    }
+
+    /**
+     * Evaluate 21+3 bonus
+     */
+    evaluate21Plus3() {
+        if (this.twentyOnePlusBet === 0 || this.playerHand.length < 2 || this.dealerHand.length < 2) {
+            return null;
+        }
+
+        const cards = [this.playerHand[0], this.playerHand[1], this.dealerHand[1]];
+
+        // Suited Three of a Kind
+        if (this.isThreeOfKind(cards) && this.isFlush(cards)) {
+            return { name: 'Suited Three of a Kind', payout: 100 };
+        }
+
+        // Straight Flush
+        if (this.isStraight(cards) && this.isFlush(cards)) {
+            return { name: 'Straight Flush', payout: 40 };
+        }
+
+        // Three of a Kind
+        if (this.isThreeOfKind(cards)) {
+            return { name: 'Three of a Kind', payout: 30 };
+        }
+
+        // Straight
+        if (this.isStraight(cards)) {
+            return { name: 'Straight', payout: 10 };
+        }
+
+        // Flush
+        if (this.isFlush(cards)) {
+            return { name: 'Flush', payout: 5 };
+        }
+
+        return null;
+    }
+
+    /**
+     * Evaluate Top 3 bonus
+     */
+    evaluateTop3() {
+        if (this.top3Bet === 0 || this.playerHand.length < 2 || this.dealerHand.length < 2) {
+            return null;
+        }
+
+        const cards = [this.playerHand[0], this.playerHand[1], this.dealerHand[1]];
+
+        // Suited Three of a Kind
+        if (this.isThreeOfKind(cards) && this.isFlush(cards)) {
+            return { name: 'Suited Three of a Kind', payout: 270 };
+        }
+
+        // Straight Flush
+        if (this.isStraight(cards) && this.isFlush(cards)) {
+            return { name: 'Straight Flush', payout: 180 };
+        }
+
+        // Three of a Kind
+        if (this.isThreeOfKind(cards)) {
+            return { name: 'Three of a Kind', payout: 90 };
+        }
+
+        // Straight
+        if (this.isStraight(cards)) {
+            return { name: 'Straight', payout: 9 };
+        }
+
+        // Flush
+        if (this.isFlush(cards)) {
+            return { name: 'Flush', payout: 9 };
+        }
+
+        return null;
+    }
+
+    /**
+     * Evaluate and pay all bonuses
+     */
+    evaluateAndPayBonuses() {
+        let bonusMessages = [];
+        let totalBonusWinnings = 0;
+
+        try {
+            // Lucky Pair
+            const luckyPairResult = this.evaluateLuckyPair();
+            if (luckyPairResult) {
+                const winAmount = this.luckyPairBet * luckyPairResult.payout;
+                this.chips += winAmount;
+                totalBonusWinnings += winAmount;
+                bonusMessages.push(`Lucky Pair (${luckyPairResult.name}): +$${winAmount}`);
+                this.stats.recordBonus('luckyPair', winAmount);
+                if (this.settings.soundEnabled) this.sound.win();
+            }
+
+            // 21+3
+            const twentyOnePlusResult = this.evaluate21Plus3();
+            if (twentyOnePlusResult) {
+                const winAmount = this.twentyOnePlusBet * twentyOnePlusResult.payout;
+                this.chips += winAmount;
+                totalBonusWinnings += winAmount;
+                bonusMessages.push(`21+3 (${twentyOnePlusResult.name}): +$${winAmount}`);
+                this.stats.recordBonus('twentyOnePlus', winAmount);
+                if (this.settings.soundEnabled) this.sound.win();
+            }
+
+            // Top 3
+            const top3Result = this.evaluateTop3();
+            if (top3Result) {
+                const winAmount = this.top3Bet * top3Result.payout;
+                this.chips += winAmount;
+                totalBonusWinnings += winAmount;
+                bonusMessages.push(`Top 3 (${top3Result.name}): +$${winAmount}`);
+                this.stats.recordBonus('top3', winAmount);
+                if (this.settings.soundEnabled) this.sound.win();
+            }
+
+            // Display bonus results
+            if (bonusMessages.length > 0) {
+                const message = '🎰 BONUS WIN! ' + bonusMessages.join(' | ');
+                this.showMessage(message, 'win');
+                setTimeout(() => {
+                    this.showMessage('Continue playing...', 'info');
+                }, 3000);
+            }
+        } catch (e) {
+            console.error('Error evaluating bonuses:', e);
+        }
+    }
+
+    /**
      * Deal initial cards
      */
     deal() {
         if (this.currentBet === 0 || this.currentBet > this.chips) return;
 
+        // Check if enough chips for main bet + side bets
+        const totalBets = this.currentBet + this.luckyPairBet + this.twentyOnePlusBet + this.top3Bet;
+        if (totalBets > this.chips) {
+            this.showMessage('Not enough chips for all bets!', 'error');
+            return;
+        }
+
         try {
+            // Deduct side bets from chips
+            this.chips -= (this.luckyPairBet + this.twentyOnePlusBet + this.top3Bet);
+
             this.gameActive = true;
             this.roundInProgress = true;
             this.dealerHidden = true;
@@ -707,6 +1018,14 @@ class BlackjackGame {
             setTimeout(() => {
                 this.showControls('game');
                 this.updateDisplay();
+
+                // Evaluate bonuses after cards are dealt
+                this.evaluateAndPayBonuses();
+
+                // Update display after bonuses are paid
+                this.updateDisplay();
+                this.updateStatsDisplay();
+
                 this.checkInitialConditions();
                 this.updateStrategyHint();
             }, 900);
@@ -1019,6 +1338,15 @@ class BlackjackGame {
             this.canSurrender = true;
             this.gameActive = false;
             this.roundInProgress = false;
+
+            // Reset side bets
+            this.luckyPairBet = 0;
+            this.twentyOnePlusBet = 0;
+            this.top3Bet = 0;
+            if (this.luckyPairCheckbox) this.luckyPairCheckbox.checked = false;
+            if (this.twentyOnePlusCheckbox) this.twentyOnePlusCheckbox.checked = false;
+            if (this.top3Checkbox) this.top3Checkbox.checked = false;
+
             this.dealBtn.disabled = true;
             this.showControls('betting');
             this.playerHand = [];
@@ -1178,7 +1506,11 @@ class BlackjackGame {
                 'stat-blackjacks': this.stats.blackjacks,
                 'stat-winrate': `${this.stats.getWinRate()}%`,
                 'stat-bigwin': `$${this.stats.biggestWin}`,
-                'stat-wagered': `$${this.stats.totalWagered}`
+                'stat-wagered': `$${this.stats.totalWagered}`,
+                'stat-lucky-pair-wins': this.stats.luckyPairWins,
+                'stat-twentyone-plus-wins': this.stats.twentyOnePlusWins,
+                'stat-top3-wins': this.stats.top3Wins,
+                'stat-bonus-winnings': `$${this.stats.bonusWinnings}`
             };
 
             for (const [id, value] of Object.entries(statElements)) {
