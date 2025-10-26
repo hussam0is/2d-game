@@ -1,4 +1,153 @@
-// Blackjack Game Logic
+// Blackjack Pro - Professional Grade Casino Blackjack
+
+// Statistics Tracker with localStorage
+class Statistics {
+    constructor() {
+        this.loadStats();
+    }
+
+    loadStats() {
+        const saved = localStorage.getItem('blackjack_stats');
+        if (saved) {
+            Object.assign(this, JSON.parse(saved));
+        } else {
+            this.handsPlayed = 0;
+            this.wins = 0;
+            this.losses = 0;
+            this.pushes = 0;
+            this.blackjacks = 0;
+            this.biggestWin = 0;
+            this.totalWagered = 0;
+        }
+    }
+
+    saveStats() {
+        localStorage.setItem('blackjack_stats', JSON.stringify({
+            handsPlayed: this.handsPlayed,
+            wins: this.wins,
+            losses: this.losses,
+            pushes: this.pushes,
+            blackjacks: this.blackjacks,
+            biggestWin: this.biggestWin,
+            totalWagered: this.totalWagered
+        }));
+    }
+
+    recordHand(result, amount) {
+        this.handsPlayed++;
+        this.totalWagered += amount;
+
+        if (result === 'win') {
+            this.wins++;
+            if (amount > this.biggestWin) this.biggestWin = amount;
+        } else if (result === 'lose') {
+            this.losses++;
+        } else if (result === 'push') {
+            this.pushes++;
+        } else if (result === 'blackjack') {
+            this.wins++;
+            this.blackjacks++;
+            const winAmount = Math.floor(amount * 1.5);
+            if (winAmount > this.biggestWin) this.biggestWin = winAmount;
+        }
+
+        this.saveStats();
+    }
+
+    getWinRate() {
+        const totalDecisive = this.wins + this.losses;
+        return totalDecisive > 0 ? Math.round((this.wins / totalDecisive) * 100) : 0;
+    }
+
+    reset() {
+        this.handsPlayed = 0;
+        this.wins = 0;
+        this.losses = 0;
+        this.pushes = 0;
+        this.blackjacks = 0;
+        this.biggestWin = 0;
+        this.totalWagered = 0;
+        this.saveStats();
+    }
+}
+
+// Settings Manager with localStorage
+class Settings {
+    constructor() {
+        this.loadSettings();
+    }
+
+    loadSettings() {
+        const saved = localStorage.getItem('blackjack_settings');
+        if (saved) {
+            Object.assign(this, JSON.parse(saved));
+        } else {
+            this.soundEnabled = true;
+            this.hintsEnabled = false;
+            this.animationsEnabled = true;
+            this.autoStandOn21 = true;
+        }
+    }
+
+    saveSettings() {
+        localStorage.setItem('blackjack_settings', JSON.stringify({
+            soundEnabled: this.soundEnabled,
+            hintsEnabled: this.hintsEnabled,
+            animationsEnabled: this.animationsEnabled,
+            autoStandOn21: this.autoStandOn21
+        }));
+    }
+
+    toggle(setting) {
+        this[setting] = !this[setting];
+        this.saveSettings();
+        return this[setting];
+    }
+}
+
+// Simple Sound Manager using Web Audio API
+class SoundManager {
+    constructor() {
+        this.context = null;
+        this.enabled = true;
+    }
+
+    init() {
+        try {
+            this.context = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio API not supported');
+        }
+    }
+
+    beep(frequency = 440, duration = 100, volume = 0.1) {
+        if (!this.enabled || !this.context) return;
+
+        const oscillator = this.context.createOscillator();
+        const gainNode = this.context.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.context.destination);
+
+        gainNode.gain.value = volume;
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+
+        oscillator.start();
+        oscillator.stop(this.context.currentTime + duration / 1000);
+    }
+
+    cardDeal() { this.beep(392, 50, 0.05); }
+    chipBet() { this.beep(523, 80, 0.08); }
+    win() { this.beep(659, 200, 0.12); }
+    lose() { this.beep(220, 300, 0.10); }
+    blackjack() {
+        this.beep(523, 100, 0.10);
+        setTimeout(() => this.beep(659, 100, 0.10), 120);
+        setTimeout(() => this.beep(784, 200, 0.12), 240);
+    }
+    click() { this.beep(600, 30, 0.05); }
+}
 
 class Card {
     constructor(suit, value) {
@@ -88,15 +237,30 @@ class BlackjackGame {
     constructor() {
         this.playerHand = [];
         this.dealerHand = [];
+        this.splitHand = null;
+        this.currentHand = 'main'; // 'main' or 'split'
         this.chips = 1000;
         this.currentBet = 0;
+        this.splitBet = 0;
+        this.insuranceBet = 0;
         this.gameActive = false;
         this.dealerHidden = false;
+        this.canSplit = false;
+        this.canSurrender = true;
+        this.hasInsurance = false;
+
+        // Initialize pro systems
+        this.stats = new Statistics();
+        this.settings = new Settings();
+        this.sound = new SoundManager();
+        this.sound.init();
 
         this.initializeElements();
-        this.initializeDeck(); // Initialize deck based on selector
+        this.initializeDeck();
         this.attachEventListeners();
+        this.loadSettings();
         this.updateDisplay();
+        this.updateStatsDisplay();
     }
 
     initializeElements() {
@@ -104,6 +268,7 @@ class BlackjackGame {
         this.chipsDisplay = document.getElementById('chips');
         this.betDisplay = document.getElementById('current-bet');
         this.cardsRemainingDisplay = document.getElementById('cards-remaining');
+        this.winRateDisplay = document.getElementById('win-rate');
         this.playerCardsEl = document.getElementById('player-cards');
         this.dealerCardsEl = document.getElementById('dealer-cards');
         this.playerScoreEl = document.getElementById('player-score');
@@ -113,18 +278,50 @@ class BlackjackGame {
         // Control sections
         this.bettingControls = document.getElementById('betting-controls');
         this.gameControls = document.getElementById('game-controls');
+        this.insuranceControls = document.getElementById('insurance-controls');
         this.newGameControls = document.getElementById('new-game-controls');
+        this.strategyHint = document.getElementById('strategy-hint');
+        this.hintText = document.getElementById('hint-text');
 
         // Buttons
         this.dealBtn = document.getElementById('deal-btn');
         this.hitBtn = document.getElementById('hit-btn');
         this.standBtn = document.getElementById('stand-btn');
         this.doubleBtn = document.getElementById('double-btn');
+        this.splitBtn = document.getElementById('split-btn');
+        this.surrenderBtn = document.getElementById('surrender-btn');
+        this.insuranceYesBtn = document.getElementById('insurance-yes-btn');
+        this.insuranceNoBtn = document.getElementById('insurance-no-btn');
         this.newGameBtn = document.getElementById('new-game-btn');
         this.betButtons = document.querySelectorAll('.bet-btn');
 
+        // Modal elements
+        this.statsBtn = document.getElementById('stats-btn');
+        this.settingsBtn = document.getElementById('settings-btn');
+        this.statsModal = document.getElementById('stats-modal');
+        this.settingsModal = document.getElementById('settings-modal');
+        this.resetStatsBtn = document.getElementById('reset-stats-btn');
+
+        // Settings toggles
+        this.soundToggle = document.getElementById('sound-toggle');
+        this.hintsToggle = document.getElementById('hints-toggle');
+        this.animationsToggle = document.getElementById('animations-toggle');
+        this.autoStandToggle = document.getElementById('auto-stand-toggle');
+
         // Deck selector
         this.deckCountSelect = document.getElementById('deck-count');
+
+        // Close buttons
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.onclick = () => this.closeModal(btn.dataset.modal);
+        });
+
+        // Click outside modal to close
+        [this.statsModal, this.settingsModal].forEach(modal => {
+            modal.onclick = (e) => {
+                if (e.target === modal) this.closeModal(modal.id);
+            };
+        });
     }
 
     initializeDeck() {
