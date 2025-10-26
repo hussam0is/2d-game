@@ -1,5 +1,11 @@
-// Service Worker for Blackjack PWA
-const CACHE_NAME = 'blackjack-pro-v2';
+/**
+ * Service Worker for Blackjack Pro PWA
+ * Production-ready with comprehensive caching strategies
+ * @version 2.0.0
+ */
+
+const CACHE_NAME = 'blackjack-pro-v2.0.0';
+const RUNTIME_CACHE = 'blackjack-runtime-v2.0.0';
 
 // Get the base path from service worker location
 const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
